@@ -13,15 +13,17 @@ from pywebio.platform.fastapi import asgi_app
 import time
 import pywebio_battery as battery
 from app.constants import *
+from base64 import b64encode
+
 app = FastAPI()
 apiapp = FastAPI()
 def trueurl(url):
 
     r = requests.head(url, allow_redirects=True)
     return r.url
-@apiapp.get("/sitemap/", response_class=ORJSONResponse)
+@apiapp.get("/autocutapi/", response_class=ORJSONResponse)
 async def sitemap(url:str):
-    print('check url',url)
+    print('read video from request body or load video from url')
     # if not isvaliddomain(url):
     #     return {"urls": 'not a valid domain'}
     if url.startswith("http://"):
@@ -58,8 +60,22 @@ def index() -> None:
     # run_js(HEADER)
     # run_js(FOOTER)
     
-    url = input("input your target domain",datalist=popular_shopify_stores)    
-    print('check url',url)
+    url = input("load video from url")    
+
+#    load video bytes from url
+
+    videos = file_upload("Select some videos:", accept="video/*",max_size=100M, multiple=True)
+    for v in videos:
+        open('videos/'+v['filename']+session.info.user_ip, 'wb').write(v['content'])  
+        videourl='videos/'+v['filename']+session.info.user_ip
+        put_html('<video controls="controls" src="{url}"></video>'.format(url=videourl))        
+        b64content = b64encode(v['content']).decode('ascii')
+        videourl = "data:;base64, {b64content}".format(b64content=b64content)
+        put_html('<video controls="controls" src="{url}"></video>'.format(url=videourl))
+        
+        print('check video is broken',url)
+#     load config instead of command line 
+
     # if not isvaliddomain(url):
     #     return {"urls": 'not a valid domain'}
     if url.startswith("http://"):
@@ -70,6 +86,7 @@ def index() -> None:
         url='https://'+url
     # url =trueurl(url)
 
+    
     with use_scope('loading'):
 
         put_loading(shape='border', color='success').style('width:4rem; height:4rem')
